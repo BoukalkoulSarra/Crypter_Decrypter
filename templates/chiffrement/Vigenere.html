@@ -1,0 +1,230 @@
+{% extends 'parte/navbar.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.css' %}">
+<br>
+<!-- chiffrement (chiffrement) Section -->
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Chiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'ChiffVigenere' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="motClair">Entrez un mot ou une phrase</label>
+    <input type="text" class="form-control" name="motClair" id="motClair" value="{{ motClair }}" required>
+    <label for="key">Clé</label>
+    <input type="text" class="form-control" name="key" id="key" value="{{ key }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary">chiffrer</button>
+</form>
+
+{% if motChiffre %}
+  <br>
+  <div class="form-group">
+    <label>Texte Chiffré :</label>
+    <textarea class="form-control" rows="3" readonly>{{ motChiffre }}</textarea>
+  </div>
+
+
+{% endif %}
+
+
+<!-- Déchiffrement (Decryption) Section -->
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Déchiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'dechVigenere' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="textChiffre">Texte Chiffré</label>
+    <input type="text" class="form-control" name="textChiffre" id="textChiffre" value="{{ textChiffre }}" required>
+    <label for="cle">Clé</label>
+    <input type="text" class="form-control" name="cle" id="cle" value="{{ cle }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary">Déchiffrement</button>
+</form>
+
+{% if textClair %}
+  <br>
+  <div class="form-group">
+    <label>textClair :</label>
+    <textarea class="form-control" rows="3" readonly>{{ textClair }}</textarea>
+  </div>
+{% endif %}
+
+
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Python / C</em>
+</div>
+<br>
+
+<div class="input-group mb-3">
+  <select class="custom-select" id="languageSelect">
+    <option selected disabled>Choose...</option>
+    <option value="python">Python</option>
+    <option value="cpp">C</option>
+  </select>
+  <div class="input-group-append">
+    <button type="button" class="btn btn-primary" onclick="showCode()">Afficher</button>
+  </div>
+</div>
+
+
+
+<div class="form-group">
+  <label for="codeDisplay">Code</label>
+  <textarea class="form-control" id="codeDisplay" rows="10" readonly></textarea>
+</div>
+
+<script>
+  function showCode() {
+    const language = document.getElementById("languageSelect").value;
+    const textarea = document.getElementById("codeDisplay");
+
+    if (language === "python") {
+      textarea.value = `def generate_key(message, key):
+    key = list(key)
+    if len(message) == len(key):
+        return "".join(key)
+    else:
+        for i in range(len(message) - len(key)):
+            key.append(key[i % len(key)])
+    return "".join(key)
+
+def encrypt_vigenere(message, key):
+    encrypted_text = []
+    key = generate_key(message, key)
+    for i in range(len(message)):
+        if message[i].isalpha():
+            offset = 65 if message[i].isupper() else 97
+            m = ord(message[i]) - offset
+            k = ord(key[i].upper()) - 65
+            encrypted_char = chr((m + k) % 26 + offset)
+            encrypted_text.append(encrypted_char)
+        else:
+            encrypted_text.append(message[i])  # caractères non alphabétiques
+    return "".join(encrypted_text)
+
+def decrypt_vigenere(cipher_text, key):
+    decrypted_text = []
+    key = generate_key(cipher_text, key)
+    for i in range(len(cipher_text)):
+        if cipher_text[i].isalpha():
+            offset = 65 if cipher_text[i].isupper() else 97
+            c = ord(cipher_text[i]) - offset
+            k = ord(key[i].upper()) - 65
+            decrypted_char = chr((c - k + 26) % 26 + offset)
+            decrypted_text.append(decrypted_char)
+        else:
+            decrypted_text.append(cipher_text[i])
+    return "".join(decrypted_text)
+
+# =============================
+#        Programme principal
+# =============================
+def main():
+    choix = input("Voulez-vous chiffrer ou déchiffrer ? (c/d) : ").lower()
+    message = input("Entrez le message : ")
+    key = input("Entrez la clé : ")
+
+    if choix == 'c':
+        texte_chiffre = encrypt_vigenere(message, key)
+        print("Texte chiffré :", texte_chiffre)
+    elif choix == 'd':
+        texte_dechiffre = decrypt_vigenere(message, key)
+        print("Texte déchiffré :", texte_dechiffre)
+    else:
+        print("Choix invalide.")
+
+if __name__ == "__main__":
+    main()
+`;
+
+    } else if (language === "cpp") {
+      textarea.value = `#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+void generateKey(char message[], char key[], char newKey[]) {
+    int msgLen = strlen(message);
+    int keyLen = strlen(key);
+    int i, j = 0;
+
+    for (i = 0; i < msgLen; i++) {
+        if (isalpha(message[i])) {
+            newKey[i] = toupper(key[j % keyLen]);
+            j++;
+        } else {
+            newKey[i] = message[i]; // conserver les caractères non alphabétiques
+        }
+    }
+    newKey[i] = '\0';
+}
+
+void encrypt(char message[], char key[], char cipher[]) {
+    char newKey[1000];
+    generateKey(message, key, newKey);
+
+    for (int i = 0; i < strlen(message); i++) {
+        if (isalpha(message[i])) {
+            char offset = isupper(message[i]) ? 'A' : 'a';
+            cipher[i] = ((toupper(message[i]) - 'A') + (newKey[i] - 'A')) % 26 + offset;
+        } else {
+            cipher[i] = message[i];
+        }
+    }
+    cipher[strlen(message)] = '\0';
+}
+
+void decrypt(char cipher[], char key[], char original[]) {
+    char newKey[1000];
+    generateKey(cipher, key, newKey);
+
+    for (int i = 0; i < strlen(cipher); i++) {
+        if (isalpha(cipher[i])) {
+            char offset = isupper(cipher[i]) ? 'A' : 'a';
+            original[i] = ((toupper(cipher[i]) - 'A') - (newKey[i] - 'A') + 26) % 26 + offset;
+        } else {
+            original[i] = cipher[i];
+        }
+    }
+    original[strlen(cipher)] = '\0';
+}
+
+int main() {
+    char message[1000], key[1000], cipher[1000], original[1000];
+    char choix;
+
+    printf("Voulez-vous chiffrer ou déchiffrer ? (c/d) : ");
+    scanf(" %c", &choix);
+    getchar();  // Pour consommer le saut de ligne après scanf
+
+    printf("Entrez le message : ");
+    fgets(message, sizeof(message), stdin);
+    message[strcspn(message, "\n")] = '\0'; // Supprimer le \n à la fin
+
+    printf("Entrez la clé : ");
+    fgets(key, sizeof(key), stdin);
+    key[strcspn(key, "\n")] = '\0';
+
+    if (choix == 'c' || choix == 'C') {
+        encrypt(message, key, cipher);
+        printf("Texte chiffré : %s\n", cipher);
+    } else if (choix == 'd' || choix == 'D') {
+        decrypt(message, key, original);
+        printf("Texte déchiffré : %s\n", original);
+    } else {
+        printf("Choix invalide.\n");
+    }
+
+    return 0;
+}
+`;
+    } else {
+      textarea.value = "";
+    }
+  }
+</script>
+{% endblock content %}

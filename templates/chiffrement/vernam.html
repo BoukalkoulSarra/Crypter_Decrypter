@@ -1,0 +1,199 @@
+{% extends 'parte/navbar.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.css' %}">
+<br>
+<!-- chiffrement Section -->
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Chiffrement Vernam</em>
+</div>
+
+<form method="POST" action="{% url 'vernam_encrypt' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="message">Entrez un mot ou une phrase</label>
+    <input type="text" class="form-control" name="message" id="message" value="{{ message }}" required>
+    <label for="key">Clé</label>
+    <input type="text" class="form-control" name="key" id="key" value="{{ key }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary">chiffrer</button>
+</form>
+
+{% if result %}
+  <div class="alert alert-danger mt-3">
+    {{ result }}
+  </div>
+{% endif %}
+
+{% if encrypted_message %}
+  <div class="form-group mt-3">
+    <label for="message_bin">Message binaire</label>
+    <input type="text" class="form-control" name="message_bin" id="message_bin" value="{{ message_bin }}" readonly>
+    <label for="key_bin">Clé binaire</label>
+    <input type="text" class="form-control" name="key_bin" id="key_bin" value="{{ key_bin }}" readonly>
+  </div>
+  <br>
+  <div class="form-group">
+    <label>Texte Chiffré :</label>
+    <textarea class="form-control" rows="3" readonly>{{ encrypted_message }}</textarea>
+  </div>
+{% endif %}
+
+
+
+
+<div class="mx-auto text-primary h3" style="width: 300px;">
+  <em>Déchiffrement Vernam</em>
+</div>
+
+<form method="POST" action="{% url 'vernam_decrypt' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="encrypted_message">Message chiffré (Base64)</label>
+    <input type="text" class="form-control" name="encrypted_message" id="encrypted_message" value="{{ encrypted_message }}" required>
+
+    <label for="key">Clé</label>
+    <input type="text" class="form-control" name="key" id="key" value="{{ key }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary mt-2">Déchiffrer</button>
+</form>
+
+{% if result %}
+  <div class="alert alert-danger mt-3">{{ result }}</div>
+{% endif %}
+
+{% if decrypted_message %}
+  <div class="form-group mt-4">
+    <label>Clé binaire</label>
+    <input type="text" class="form-control" value="{{ key_bin }}" readonly>
+
+    <label>Texte déchiffré</label>
+    <textarea class="form-control" rows="3" readonly>{{ decrypted_message }}</textarea>
+  </div>
+{% endif %}
+
+
+
+
+
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Python / C</em>
+</div>
+<br>
+
+<div class="input-group mb-3">
+  <select class="custom-select" id="languageSelect">
+    <option selected disabled>Choose...</option>
+    <option value="python">Python</option>
+    <option value="cpp">C</option>
+  </select>
+  <div class="input-group-append">
+    <button type="button" class="btn btn-primary" onclick="showCode()">Afficher</button>
+  </div>
+</div>
+
+
+
+<div class="form-group">
+  <label for="codeDisplay">Code</label>
+  <textarea class="form-control" id="codeDisplay" rows="10" readonly></textarea>
+</div>
+
+<script>
+  function showCode() {
+    const language = document.getElementById("languageSelect").value;
+    const textarea = document.getElementById("codeDisplay");
+
+    if (language === "python") {
+      textarea.value = `import os
+
+def vernam_encrypt(message, key):
+    # Convertir message et clé en valeurs binaires
+    message_bin = ''.join(format(ord(c), '08b') for c in message)
+    key_bin = ''.join(format(ord(c), '08b') for c in key)
+
+    # Vérifier que la clé et le message ont la même longueur
+    if len(message_bin) != len(key_bin):
+        raise ValueError("La clé doit avoir la même longueur que le message.")
+
+    # XOR entre le message et la clé
+    encrypted_bin = ''.join(str(int(message_bin[i]) ^ int(key_bin[i])) for i in range(len(message_bin)))
+
+    # Convertir le résultat binaire en texte
+    encrypted_message = ''.join(chr(int(encrypted_bin[i:i+8], 2)) for i in range(0, len(encrypted_bin), 8))
+
+    return encrypted_message
+
+# Exemple d'utilisation
+message = input("Entrez le message à chiffrer : ")
+key = input("Entrez la clé (doit être de la même longueur que le message) : ")
+
+# Vérifier que la clé et le message ont la même longueur
+if len(key) != len(message):
+    print("La clé doit avoir la même longueur que le message.")
+else:
+    encrypted_message = vernam_encrypt(message, key)
+    print("Message chiffré :", encrypted_message)
+`;
+
+    } else if (language === "cpp") {
+      textarea.value = `#include <stdio.h>
+#include <string.h>
+
+// Fonction pour convertir un caractère en binaire (8 bits)
+void char_to_bin(unsigned char c, char *bin) {
+    for (int i = 7; i >= 0; i--) {
+        bin[7 - i] = (c & (1 << i)) ? '1' : '0';
+    }
+    bin[8] = '\0';
+}
+
+// Fonction pour chiffrer avec Vernam (XOR)
+void vernam_encrypt(const char *message, const char *key, char *cipher) {
+    int len = strlen(message);
+
+    for (int i = 0; i < len; i++) {
+        cipher[i] = message[i] ^ key[i]; // Opération XOR directe sur chaque caractère
+    }
+    cipher[len] = '\0';
+}
+
+int main() {
+    char message[1024], key[1024], cipher[1024];
+
+    printf("Entrez le message à chiffrer : ");
+    fgets(message, sizeof(message), stdin);
+    message[strcspn(message, "\n")] = '\0'; // Supprimer le saut de ligne
+
+    printf("Entrez la clé (doit être de la même longueur que le message) : ");
+    fgets(key, sizeof(key), stdin);
+    key[strcspn(key, "\n")] = '\0';
+
+    if (strlen(key) != strlen(message)) {
+        printf("Erreur : La clé doit avoir la même longueur que le message.\n");
+        return 1;
+    }
+
+    vernam_encrypt(message, key, cipher);
+
+    printf("Message chiffré (brut) : ");
+    for (int i = 0; i < strlen(cipher); i++) {
+        printf("%c", cipher[i]);
+    }
+
+    printf("\nMessage chiffré (en hex) : ");
+    for (int i = 0; i < strlen(cipher); i++) {
+        printf("%02X ", (unsigned char)cipher[i]);
+    }
+
+    printf("\n");
+
+    return 0;
+}python
+`;
+    } else {
+      textarea.value = "";
+    }
+  }
+</script>
+{% endblock content %}

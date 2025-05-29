@@ -1,0 +1,202 @@
+{% extends 'parte/navbar.html' %}
+{% load static %}
+{% block content %}
+
+<!-- chiffrement Section -->
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Chiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'encryptBeaufort' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="motClair">Entrez un mot ou une phrase</label>
+    <input type="text" class="form-control" name="motClair" id="motClair" value="{{ motClair }}" required>
+
+    <label for="key">Clé</label>
+    <input type="text" class="form-control" name="key" id="key" value="{{ key }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary">chiffrer</button>
+</form>
+
+{% if motChiffre %}
+  <br>
+  <div class="form-group">
+    <label>Texte Chiffré :</label>
+    <textarea class="form-control" rows="3" readonly>{{ motChiffre }}</textarea>
+  </div>
+{% endif %}
+
+<hr>
+
+<!-- decrypter Section -->
+<div class="mx-auto text-primary h3" style="width: 300px;">
+  <em>Déchiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'dencryptBeaufort' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="textDecrypter">Message chiffré</label>
+    <input type="text" class="form-control" name="textDecrypter" id="textDecrypter" value="{{ textDecrypter }}" required>
+    <label for="cle">Clé</label>
+    <input type="text" class="form-control" name="cle" id="cle" value="{{ cle }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary mt-2">Déchiffrer</button>
+</form>
+
+{% if textClair %}
+  <div class="alert alert-success mt-3">Message Déchiffré : {{ textClair }}</div>
+{% endif %}
+
+
+
+
+
+
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Python / C</em>
+</div>
+<br>
+
+<div class="input-group mb-3">
+  <select class="custom-select" id="languageSelect">
+    <option selected disabled>Choose...</option>
+    <option value="python">Python</option>
+    <option value="cpp">C</option>
+  </select>
+  <div class="input-group-append">
+    <button type="button" class="btn btn-primary" onclick="showCode()">Afficher</button>
+  </div>
+</div>
+<div class="form-group">
+  <label for="codeDisplay">Code</label>
+  <textarea class="form-control" id="codeDisplay" rows="10" readonly></textarea>
+</div>
+
+<script>
+  function showCode() {
+    const language = document.getElementById("languageSelect").value;
+    const textarea = document.getElementById("codeDisplay");
+
+    if (language === "python") {
+      textarea.value = `class BeaufortCipher:
+    def __init__(self, key):
+        self.alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        self.key = key.upper()
+
+    def _format_key(self, text):
+        # Répéter la clé pour qu'elle soit aussi longue que le texte
+        key_repeated = (self.key * ((len(text) // len(self.key)) + 1))[:len(text)]
+        return key_repeated
+
+    def transform(self, text):
+        result = ""
+        text = text.upper()
+        formatted_key = self._format_key(text)
+
+        for i, char in enumerate(text):
+            if char in self.alphabet:
+                k = formatted_key[i]
+                c_index = (self.alphabet.index(k) - self.alphabet.index(char)) % 26
+                result += self.alphabet[c_index]
+            else:
+                result += char  # Conserve les caractères non alphabétiques
+        return result
+
+
+# === Interface utilisateur ===
+if __name__ == "__main__":
+    print("=== Chiffrement / Déchiffrement Beaufort ===")
+    choice = input("Voulez-vous (c)rypter ou (d)écrypter ? (c/d) : ").lower()
+
+    if choice in ['c', 'd']:
+        message = input("Entrez le message : ")
+        key = input("Entrez la clé : ")
+
+        cipher = BeaufortCipher(key)
+        result = cipher.transform(message)
+
+        if choice == 'c':
+            print("🔐 Message chiffré :", result)
+        else:
+            print("🔓 Message déchiffré :", result)
+    else:
+        print("❌ Choix invalide. Veuillez entrer 'c' ou 'd'.")
+
+`;
+
+    } else if (language === "cpp") {
+      textarea.value = `#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_LEN 1000
+
+// Fonction de transformation Beaufort (symétrique)
+void beaufort_cipher(const char *message, const char *key, char *output) {
+    int msg_len = strlen(message);
+    int key_len = strlen(key);
+    int i;
+
+    for (i = 0; i < msg_len; i++) {
+        char msg_char = toupper(message[i]);
+
+        if (isalpha(msg_char)) {
+            char key_char = toupper(key[i % key_len]);
+            int k = key_char - 'A';
+            int p = msg_char - 'A';
+
+            // Beaufort: C = (K - P) mod 26
+            int c_index = (k - p + 26) % 26;
+            output[i] = 'A' + c_index;
+        } else {
+            output[i] = message[i]; // Non alphabétique, conserver
+        }
+    }
+
+    output[i] = '\0';
+}
+
+int main() {
+    char message[MAX_LEN];
+    char key[MAX_LEN];
+    char result[MAX_LEN];
+    char choice;
+
+    printf("=== Chiffrement / Déchiffrement Beaufort ===\n");
+    printf("Voulez-vous (c)rypter ou (d)écrypter ? (c/d) : ");
+    scanf(" %c", &choice);
+    getchar();  // Consomme le saut de ligne
+
+    if (choice == 'c' || choice == 'd') {
+        printf("Entrez le message : ");
+        fgets(message, MAX_LEN, stdin);
+        message[strcspn(message, "\n")] = '\0'; // Supprime le saut de ligne
+
+        printf("Entrez la clé : ");
+        fgets(key, MAX_LEN, stdin);
+        key[strcspn(key, "\n")] = '\0';
+
+        beaufort_cipher(message, key, result);
+
+        if (choice == 'c') {
+            printf("🔐 Message chiffré : %s\n", result);
+        } else {
+            printf("🔓 Message déchiffré : %s\n", result);
+        }
+    } else {
+        printf("❌ Choix invalide. Veuillez entrer 'c' ou 'd'.\n");
+    }
+
+    return 0;
+}
+
+`;
+    } else {
+      textarea.value = "";
+    }
+  }
+</script>
+{% endblock content %}
+

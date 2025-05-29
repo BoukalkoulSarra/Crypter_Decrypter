@@ -1,0 +1,240 @@
+{% extends 'parte/navbar.html' %}
+{% load static %}
+{% block content %}
+
+<!-- chiffrement Section -->
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Chiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'AutoKey' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="motClair">Entrez un mot ou une phrase</label>
+    <input type="text" class="form-control" name="motClair" id="motClair" value="{{ motClair }}" required>
+
+    <label for="key">Clé</label>
+    <input type="text" class="form-control" name="key" id="key" value="{{ key }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary">chiffrer</button>
+</form>
+
+{% if motChiffre %}
+  <br>
+  <div class="form-group">
+    <label>Texte Chiffré :</label>
+    <textarea class="form-control" rows="3" readonly>{{ motChiffre }}</textarea>
+  </div>
+{% endif %}
+
+<hr>
+
+<!-- decrypter Section -->
+<div class="mx-auto text-primary h3" style="width: 300px;">
+  <em>Déchiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'decrypterautokey' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="textDecrypter">Message chiffré</label>
+    <input type="text" class="form-control" name="textDecrypter" id="textDecrypter" value="{{ textDecrypter }}" required>
+
+    <label for="key">Clé</label>
+    <input type="text" class="form-control" name="key" id="decryptionKey" value="{{ cle }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary mt-2">Déchiffrer</button>
+</form>
+
+{% if textClair %}
+  <div class="alert alert-success mt-3">Message Déchiffré : {{ textClair }}</div>
+{% endif %}
+
+
+
+
+
+
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Python / C</em>
+</div>
+<br>
+
+<div class="input-group mb-3">
+  <select class="custom-select" id="languageSelect">
+    <option selected disabled>Choose...</option>
+    <option value="python">Python</option>
+    <option value="cpp">C</option>
+  </select>
+  <div class="input-group-append">
+    <button type="button" class="btn btn-primary" onclick="showCode()">Afficher</button>
+  </div>
+</div>
+<div class="form-group">
+  <label for="codeDisplay">Code</label>
+  <textarea class="form-control" id="codeDisplay" rows="10" readonly></textarea>
+</div>
+
+<script>
+  function showCode() {
+    const language = document.getElementById("languageSelect").value;
+    const textarea = document.getElementById("codeDisplay");
+
+    if (language === "python") {
+      textarea.value = `def generate_autokey(plaintext, key):
+    key = list(key)
+    if len(key) < len(plaintext):
+        key.extend(list(plaintext[:len(plaintext) - len(key)]))
+    return ''.join(key)
+
+def encrypt_autokey(plaintext, key):
+    plaintext = plaintext.upper().replace(" ", "")
+    key = generate_autokey(plaintext, key.upper())
+    cipher_text = ""
+    for p, k in zip(plaintext, key):
+        cipher_char = chr(((ord(p) - ord('A') + ord(k) - ord('A')) % 26) + ord('A'))
+        cipher_text += cipher_char
+    return cipher_text
+
+def decrypt_autokey(ciphertext, key):
+    ciphertext = ciphertext.upper().replace(" ", "")
+    key = list(key.upper())
+    plaintext = ""
+    for c in ciphertext:
+        p = chr(((ord(c) - ord(key[0])) % 26) + ord('A'))
+        plaintext += p
+        key.append(p)  # auto-key: add the decrypted char
+        key.pop(0)     # shift key to the left
+    return plaintext
+
+# ==============================
+#         Chapitre Crypter
+# ==============================
+
+print("=== Crypter un message avec clé automatique ===")
+plaintext = input("Entrez le message à chiffrer : ")
+key = input("Entrez la clé : ")
+
+cipher_text = encrypt_autokey(plaintext, key)
+print("\nTexte chiffré :", cipher_text)
+
+# ==============================
+#         Chapitre Décrypter
+# ==============================
+
+print("\n=== Décrypter un message avec clé automatique ===")
+dcipher_text = input("Entrez le message à déchiffrer : ")
+cle = input("Entrez la clé : ")
+
+decrypted_text = decrypt_autokey(dcipher_text, cle)
+print("\nTexte déchiffré :", decrypted_text)
+
+`;
+
+    } else if (language === "cpp") {
+      textarea.value = `#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+void generate_autokey(char *plaintext, char *key, char *new_key) {
+    int pt_len = strlen(plaintext);
+    int key_len = strlen(key);
+    int i;
+
+    // Copier la clé initiale
+    for (i = 0; i < key_len; i++) {
+        new_key[i] = toupper(key[i]);
+    }
+
+    // Compléter avec le plaintext
+    for (i = key_len; i < pt_len; i++) {
+        new_key[i] = toupper(plaintext[i - key_len]);
+    }
+
+    new_key[pt_len] = '\0'; // Finir par '\0'
+}
+
+void encrypt_autokey(char *plaintext, char *key, char *ciphertext) {
+    char new_key[1000];
+    int i;
+    int pt_len = strlen(plaintext);
+
+    generate_autokey(plaintext, key, new_key);
+
+    for (i = 0; i < pt_len; i++) {
+        if (isalpha(plaintext[i])) {
+            char p = toupper(plaintext[i]);
+            char k = new_key[i];
+            ciphertext[i] = ((p - 'A' + k - 'A') % 26) + 'A';
+        } else {
+            ciphertext[i] = plaintext[i]; // Si caractère non alphabétique
+        }
+    }
+    ciphertext[pt_len] = '\0';
+}
+
+void decrypt_autokey(char *ciphertext, char *key, char *plaintext) {
+    int ct_len = strlen(ciphertext);
+    char temp_key[1000];
+    int key_len = strlen(key);
+    int i;
+
+    // Initialiser temp_key avec la clé de base
+    for (i = 0; i < key_len; i++) {
+        temp_key[i] = toupper(key[i]);
+    }
+
+    int current_key_index = 0;
+    for (i = 0; i < ct_len; i++) {
+        if (isalpha(ciphertext[i])) {
+            char c = toupper(ciphertext[i]);
+            char k = temp_key[current_key_index];
+            char p = ((c - k + 26) % 26) + 'A';
+            plaintext[i] = p;
+            temp_key[key_len + current_key_index] = p; // Ajouter le p à la clé
+            current_key_index++;
+        } else {
+            plaintext[i] = ciphertext[i]; // Caractères spéciaux
+        }
+    }
+    plaintext[ct_len] = '\0';
+}
+
+int main() {
+    char plaintext[1000], key[1000], ciphertext[1000], decrypted_text[1000];
+
+    printf("=== Crypter un message avec clé automatique ===\n");
+    printf("Entrez le message à chiffrer : ");
+    fgets(plaintext, sizeof(plaintext), stdin);
+    plaintext[strcspn(plaintext, "\n")] = '\0'; // Retirer le \n à la fin
+
+    printf("Entrez la clé : ");
+    fgets(key, sizeof(key), stdin);
+    key[strcspn(key, "\n")] = '\0';
+
+    encrypt_autokey(plaintext, key, ciphertext);
+    printf("\nTexte chiffré : %s\n", ciphertext);
+
+    printf("\n=== Décrypter un message avec clé automatique ===\n");
+    printf("Entrez le message à déchiffrer : ");
+    fgets(ciphertext, sizeof(ciphertext), stdin);
+    ciphertext[strcspn(ciphertext, "\n")] = '\0';
+
+    printf("Entrez la clé : ");
+    fgets(key, sizeof(key), stdin);
+    key[strcspn(key, "\n")] = '\0';
+
+    decrypt_autokey(ciphertext, key, decrypted_text);
+    printf("\nTexte déchiffré : %s\n", decrypted_text);
+
+    return 0;
+}
+
+`;
+    } else {
+      textarea.value = "";
+    }
+  }
+</script>
+{% endblock content %}
+

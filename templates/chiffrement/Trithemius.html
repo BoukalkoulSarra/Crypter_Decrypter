@@ -1,0 +1,199 @@
+{% extends 'parte/navbar.html' %}
+{% load static %}
+{% block content %}
+
+<!-- chiffrement Section -->
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Chiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'encryptTrithemius' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="motClair">Entrez un mot ou une phrase</label>
+    <input type="text" class="form-control" name="motClair" id="motClair" value="{{ motClair }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary">chiffrer</button>
+</form>
+
+{% if motChiffre %}
+  <br>
+  <div class="form-group">
+    <label>Texte Chiffré :</label>
+    <textarea class="form-control" rows="3" readonly>{{ motChiffre }}</textarea>
+  </div>
+{% endif %}
+
+<hr>
+
+<!-- decrypter Section -->
+<div class="mx-auto text-primary h3" style="width: 300px;">
+  <em>Déchiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'dencryptTrithemius' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="textDecrypter">Message chiffré</label>
+    <input type="text" class="form-control" name="textDecrypter" id="textDecrypter" value="{{ textDecrypter }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary mt-2">Déchiffrer</button>
+</form>
+
+{% if textClair %}
+  <div class="alert alert-success mt-3">Message Déchiffré : {{ textClair }}</div>
+{% endif %}
+
+
+
+
+
+
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Python / C</em>
+</div>
+<br>
+
+<div class="input-group mb-3">
+  <select class="custom-select" id="languageSelect">
+    <option selected disabled>Choose...</option>
+    <option value="python">Python</option>
+    <option value="cpp">C</option>
+  </select>
+  <div class="input-group-append">
+    <button type="button" class="btn btn-primary" onclick="showCode()">Afficher</button>
+  </div>
+</div>
+<div class="form-group">
+  <label for="codeDisplay">Code</label>
+  <textarea class="form-control" id="codeDisplay" rows="10" readonly></textarea>
+</div>
+
+<script>
+  function showCode() {
+    const language = document.getElementById("languageSelect").value;
+    const textarea = document.getElementById("codeDisplay");
+
+    if (language === "python") {
+      textarea.value = `class TrithemiusCipher:
+    def __init__(self):
+        self.alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+    def encrypt(self, plaintext):
+        ciphertext = ""
+        for i, char in enumerate(plaintext.upper()):
+            if char.isalpha():
+                shift = i % 26
+                index = (self.alphabet.index(char) + shift) % 26
+                ciphertext += self.alphabet[index]
+            else:
+                ciphertext += char
+        return ciphertext
+
+    def decrypt(self, ciphertext):
+        plaintext = ""
+        for i, char in enumerate(ciphertext.upper()):
+            if char.isalpha():
+                shift = i % 26
+                index = (self.alphabet.index(char) - shift + 26) % 26
+                plaintext += self.alphabet[index]
+            else:
+                plaintext += char
+        return plaintext
+
+
+# === Partie interactive ===
+if __name__ == "__main__":
+    print("=== Chiffrement / Déchiffrement Trithemius ===")
+    mode = input("Mode (c = chiffrer, d = déchiffrer) : ").lower()
+    message = input("Entrez le message : ")
+
+    cipher = TrithemiusCipher()
+
+    if mode == 'c':
+        result = cipher.encrypt(message)
+        print("🔐 Message chiffré :", result)
+    elif mode == 'd':
+        result = cipher.decrypt(message)
+        print("🔓 Message déchiffré :", result)
+    else:
+        print("❌ Mode invalide.")
+`;
+
+    } else if (language === "cpp") {
+      textarea.value = `#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_LEN 1000
+
+char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+// Fonction pour chiffrer
+void encrypt(const char *plaintext, char *ciphertext) {
+    int len = strlen(plaintext);
+    for (int i = 0; i < len; i++) {
+        char c = toupper(plaintext[i]);
+        if (isalpha(c)) {
+            int shift = i % 26;
+            int index = (c - 'A' + shift) % 26;
+            ciphertext[i] = alphabet[index];
+        } else {
+            ciphertext[i] = plaintext[i];
+        }
+    }
+    ciphertext[len] = '\0';
+}
+
+// Fonction pour déchiffrer
+void decrypt(const char *ciphertext, char *plaintext) {
+    int len = strlen(ciphertext);
+    for (int i = 0; i < len; i++) {
+        char c = toupper(ciphertext[i]);
+        if (isalpha(c)) {
+            int shift = i % 26;
+            int index = (c - 'A' - shift + 26) % 26;
+            plaintext[i] = alphabet[index];
+        } else {
+            plaintext[i] = ciphertext[i];
+        }
+    }
+    plaintext[len] = '\0';
+}
+
+// === Programme principal ===
+int main() {
+    char message[MAX_LEN];
+    char result[MAX_LEN];
+    char mode;
+
+    printf("=== Chiffrement / Déchiffrement Trithemius (C) ===\n");
+    printf("Mode (c = chiffrer, d = déchiffrer) : ");
+    scanf(" %c", &mode);
+    getchar(); // Consommer le saut de ligne
+
+    printf("Entrez le message : ");
+    fgets(message, MAX_LEN, stdin);
+    message[strcspn(message, "\n")] = '\0'; // Supprimer le saut de ligne
+
+    if (mode == 'c') {
+        encrypt(message, result);
+        printf("🔐 Message chiffré : %s\n", result);
+    } else if (mode == 'd') {
+        decrypt(message, result);
+        printf("🔓 Message déchiffré : %s\n", result);
+    } else {
+        printf("❌ Mode invalide.\n");
+    }
+
+    return 0;
+}
+
+`;
+    } else {
+      textarea.value = "";
+    }
+  }
+</script>
+{% endblock content %}
+

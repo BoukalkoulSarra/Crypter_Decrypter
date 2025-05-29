@@ -1,0 +1,225 @@
+{% extends 'parte/navbar.html' %}
+{% load static %}
+{% block content %}
+
+<!-- chiffrement Section -->
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Chiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'encryptSubstitution' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="motClair">Entrez un mot ou une phrase</label>
+    <input type="text" class="form-control" name="motClair" id="motClair" value="{{ motClair }}" required>
+
+    <label for="key">Clé</label>
+    <input type="text" class="form-control" name="key" id="key" value="{{ key }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary">chiffrementt</button>
+</form>
+
+{% if motChiffre %}
+  <br>
+  <div class="form-group">
+    <label>Texte Chiffré :</label>
+    <textarea class="form-control" rows="3" readonly>{{ motChiffre }}</textarea>
+  </div>
+{% endif %}
+
+<hr>
+
+<!-- decrypter Section -->
+<div class="mx-auto text-primary h3" style="width: 300px;">
+  <em>Déchiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'dencryptSubstitution' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="textDecrypter">Message chiffré</label>
+    <input type="text" class="form-control" name="textDecrypter" id="textDecrypter" value="{{ textDecrypter }}" required>
+
+    <label for="key">Clé</label>
+    <input type="text" class="form-control" name="cle" id="cle" value="{{ cle }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary mt-2">Déchiffrer</button>
+</form>
+
+{% if textClair %}
+  <div class="alert alert-success mt-3">Message Déchiffré : {{ textClair }}</div>
+{% endif %}
+
+{% if error %}
+  <p style="color: red;"><strong>{{ error }}</strong></p>
+{% endif %}
+
+
+
+
+
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Python / C</em>
+</div>
+<br>
+
+<div class="input-group mb-3">
+  <select class="custom-select" id="languageSelect">
+    <option selected disabled>Choose...</option>
+    <option value="python">Python</option>
+    <option value="cpp">C</option>
+  </select>
+  <div class="input-group-append">
+    <button type="button" class="btn btn-primary" onclick="showCode()">Afficher</button>
+  </div>
+</div>
+<div class="form-group">
+  <label for="codeDisplay">Code</label>
+  <textarea class="form-control" id="codeDisplay" rows="10" readonly></textarea>
+</div>
+
+<script>
+  function showCode() {
+    const language = document.getElementById("languageSelect").value;
+    const textarea = document.getElementById("codeDisplay");
+
+    if (language === "python") {
+      textarea.value = `class SubstitutionCipher:
+    def __init__(self, key):
+        self.alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        self.key = key.upper()
+        if len(self.key) != 26 or not all(c in self.key for c in self.alphabet):
+            raise ValueError("La clé doit contenir 26 lettres distinctes.")
+
+        # Création des dictionnaires pour chiffrement et déchiffrement
+        self.encrypt_dict = {self.alphabet[i]: self.key[i] for i in range(26)}
+        self.decrypt_dict = {self.key[i]: self.alphabet[i] for i in range(26)}
+
+    def encrypt(self, plaintext):
+        ciphertext = ""
+        for char in plaintext.upper():
+            if char.isalpha():
+                ciphertext += self.encrypt_dict[char]
+            else:
+                ciphertext += char
+        return ciphertext
+
+    def decrypt(self, ciphertext):
+        plaintext = ""
+        for char in ciphertext.upper():
+            if char.isalpha():
+                plaintext += self.decrypt_dict[char]
+            else:
+                plaintext += char
+        return plaintext
+
+
+# === Interface interactive ===
+if __name__ == "__main__":
+    print("=== Chiffrement / Déchiffrement par Substitution ===")
+    key = input("Entrez la clé (26 lettres en MAJUSCULES sans doublons) : ").upper()
+
+    try:
+        cipher = SubstitutionCipher(key)
+    except ValueError as e:
+        print("❌ Erreur :", e)
+        exit()
+
+    mode = input("Mode (c = chiffrer, d = déchiffrer) : ").lower()
+    message = input("Entrez le message : ")
+
+    if mode == 'c':
+        encrypted = cipher.encrypt(message)
+        print("🔐 Message chiffré :", encrypted)
+    elif mode == 'd':
+        decrypted = cipher.decrypt(message)
+        print("🔓 Message déchiffré :", decrypted)
+    else:
+        print("❌ Mode invalide.")
+
+
+`;
+
+    } else if (language === "cpp") {
+      textarea.value = `#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_LEN 1000
+
+// Exemple de clé : permutation de l'alphabet
+// Ici : B -> A, C -> B, ..., A -> Z (décalage circulaire)
+char key[] = "QWERTYUIOPASDFGHJKLZXCVBNM";  // Clé de substitution (doit contenir 26 lettres)
+char alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+// Fonction de chiffrement
+void encrypt(const char *plaintext, char *ciphertext) {
+    int len = strlen(plaintext);
+    for (int i = 0; i < len; i++) {
+        char c = toupper(plaintext[i]);
+        if (isalpha(c)) {
+            int index = c - 'A';
+            ciphertext[i] = key[index];
+        } else {
+            ciphertext[i] = plaintext[i];
+        }
+    }
+    ciphertext[len] = '\0';
+}
+
+// Fonction de déchiffrement
+void decrypt(const char *ciphertext, char *plaintext) {
+    int len = strlen(ciphertext);
+    for (int i = 0; i < len; i++) {
+        char c = toupper(ciphertext[i]);
+        if (isalpha(c)) {
+            // Chercher dans la clé l’indice correspondant
+            for (int j = 0; j < 26; j++) {
+                if (key[j] == c) {
+                    plaintext[i] = alphabet[j];
+                    break;
+                }
+            }
+        } else {
+            plaintext[i] = ciphertext[i];
+        }
+    }
+    plaintext[len] = '\0';
+}
+
+// === Programme principal ===
+int main() {
+    char message[MAX_LEN];
+    char result[MAX_LEN];
+    char mode;
+
+    printf("=== Chiffrement / Déchiffrement par Substitution ===\n");
+    printf("Mode (c = chiffrer, d = déchiffrer) : ");
+    scanf(" %c", &mode);
+    getchar();  // pour consommer le retour à la ligne
+
+    printf("Entrez le message : ");
+    fgets(message, MAX_LEN, stdin);
+    message[strcspn(message, "\n")] = '\0';
+
+    if (mode == 'c') {
+        encrypt(message, result);
+        printf("🔐 Message chiffré : %s\n", result);
+    } else if (mode == 'd') {
+        decrypt(message, result);
+        printf("🔓 Message déchiffré : %s\n", result);
+    } else {
+        printf("❌ Mode invalide.\n");
+    }
+
+    return 0;
+}
+
+`;
+    } else {
+      textarea.value = "";
+    }
+  }
+</script>
+{% endblock content %}
+

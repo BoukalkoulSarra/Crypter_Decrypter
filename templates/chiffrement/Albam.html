@@ -1,0 +1,183 @@
+{% extends 'parte/navbar.html' %}
+{% load static %}
+{% block content %}
+
+<!-- chiffrement Section -->
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Chiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'encryptAlbam' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="motClair">Entrez un mot ou une phrase</label>
+    <input type="text" class="form-control" name="motClair" id="motClair" value="{{ motClair }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary">chiffrement</button>
+</form>
+
+{% if motChiffre %}
+  <br>
+  <div class="form-group">
+    <label>Texte Chiffré :</label>
+    <textarea class="form-control" rows="3" readonly>{{ motChiffre }}</textarea>
+  </div>
+{% endif %}
+
+<hr>
+
+<!-- decrypter Section -->
+<div class="mx-auto text-primary h3" style="width: 300px;">
+  <em>Déchiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'decryptAlbam' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="textDecrypter">Message chiffré</label>
+    <input type="text" class="form-control" name="textDecrypter" id="textDecrypter" value="{{ textDecrypter }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary mt-2">Déchiffrer</button>
+</form>
+
+{% if textClair %}
+  <div class="alert alert-success mt-3">Message Déchiffré : {{ textClair }}</div>
+{% endif %}
+
+
+
+
+
+
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Python / C</em>
+</div>
+<br>
+
+<div class="input-group mb-3">
+  <select class="custom-select" id="languageSelect">
+    <option selected disabled>Choose...</option>
+    <option value="python">Python</option>
+    <option value="cpp">C</option>
+  </select>
+  <div class="input-group-append">
+    <button type="button" class="btn btn-primary" onclick="showCode()">Afficher</button>
+  </div>
+</div>
+<div class="form-group">
+  <label for="codeDisplay">Code</label>
+  <textarea class="form-control" id="codeDisplay" rows="10" readonly></textarea>
+</div>
+
+<script>
+  function showCode() {
+    const language = document.getElementById("languageSelect").value;
+    const textarea = document.getElementById("codeDisplay");
+
+    if (language === "python") {
+      textarea.value = `class AlbamCipher:
+    def __init__(self):
+        self.alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        self.albam_map = self._create_albam_mapping()
+
+    def _create_albam_mapping(self):
+        mapping = {}
+        for i in range(26):
+            original = self.alphabet[i]
+            mapped = self.alphabet[(i + 13) % 26]  # Décalage de 13 (symétrie)
+            mapping[original] = mapped
+        return mapping
+
+    def encrypt(self, text):
+        return self._transform(text)
+
+    def decrypt(self, text):
+        return self._transform(text)  # Même transformation pour chiffrer/déchiffrer
+
+    def _transform(self, text):
+        result = ""
+        for char in text.upper():
+            if char in self.albam_map:
+                result += self.albam_map[char]
+            else:
+                result += char
+        return result
+
+
+# === Interface utilisateur ===
+if __name__ == "__main__":
+    print("=== Chiffrement / Déchiffrement ALBAM ===")
+    choice = input("Choisissez une option (c = chiffrer, d = déchiffrer) : ").lower()
+
+    message = input("Entrez le message : ")
+    cipher = AlbamCipher()
+
+    if choice == 'c':
+        result = cipher.encrypt(message)
+        print("🔐 Message chiffré :", result)
+    elif choice == 'd':
+        result = cipher.decrypt(message)
+        print("🔓 Message déchiffré :", result)
+    else:
+        print("❌ Option invalide. Veuillez choisir 'c' ou 'd'.")
+
+`;
+
+    } else if (language === "cpp") {
+      textarea.value = `#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_LEN 1000
+
+// Fonction de chiffrement/déchiffrement Albam (symétrique avec décalage de 13)
+void albam_transform(const char *input, char *output) {
+    int i;
+    for (i = 0; input[i] != '\0'; i++) {
+        char c = toupper(input[i]);
+        if (isalpha(c)) {
+            // A..Z → 0..25, +13 mod 26
+            char transformed = ((c - 'A' + 13) % 26) + 'A';
+            output[i] = transformed;
+        } else {
+            output[i] = input[i];  // caractères non alphabétiques restent inchangés
+        }
+    }
+    output[i] = '\0';
+}
+
+int main() {
+    char message[MAX_LEN];
+    char result[MAX_LEN];
+    char choice;
+
+    printf("=== Chiffrement / Déchiffrement ALBAM (ROT13) ===\n");
+    printf("Choisissez une option (c = chiffrer, d = déchiffrer) : ");
+    scanf(" %c", &choice);
+    getchar();  // consomme le saut de ligne
+
+    printf("Entrez le message : ");
+    fgets(message, MAX_LEN, stdin);
+    message[strcspn(message, "\n")] = '\0';  // Supprime le saut de ligne
+
+    albam_transform(message, result);
+
+    if (choice == 'c') {
+        printf("🔐 Message chiffré : %s\n", result);
+    } else if (choice == 'd') {
+        printf("🔓 Message déchiffré : %s\n", result);
+    } else {
+        printf("❌ Option invalide.\n");
+    }
+
+    return 0;
+}
+
+`;
+    } else {
+      textarea.value = "";
+    }
+  }
+</script>
+{% endblock content %}
+

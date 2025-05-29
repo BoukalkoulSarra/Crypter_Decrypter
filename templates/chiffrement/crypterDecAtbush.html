@@ -1,0 +1,226 @@
+{% extends 'parte/navbar.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.css' %}">
+
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Chiffrement Atbash</em>
+</div>
+
+<form method="POST" action="{% url 'atbush' %}"> <!-- replace 'atbash' with your URL name -->
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="motClair">Entrez un mot ou une phrase</label>
+    <input type="text" class="form-control" name="motClair" id="motClair" value="{{ motClair }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary">chiffrer</button>
+</form>
+
+{% if chiffre %}
+  <br>
+  <div class="form-group">
+    <label for="motClair" class="form-label">Texte chiffré (Atbash)</label>
+    <textarea class="form-control" rows="3" readonly>{{ chiffre }}</textarea>
+  </div>
+{% endif %}
+
+{% if conversions %}
+  <br>
+  <div class="form-group">
+    <label for="motClair" class="form-label">Détails du chiffrement (lettre → conversion)</label>
+    <ul class="list-group">
+      {% for original, converted in conversions %}
+        <li class="list-group-item">
+          {{ original }} → {{ converted }}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+<!-- Decryption Section -->
+<div class="mx-auto text-success h3" style="width: 200px;">
+  <em>Déchiffrement Atbash</em>
+</div>
+
+<form method="POST" action="{% url 'atbush_decrypt' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="motClair">Entrez le texte chiffré</label>
+    <input type="text" class="form-control" name="motChiffre" id="motChiffre" value="{{ motChiffre }}" required>
+  </div>
+  <button type="submit" class="btn btn-success">Déchiffrer</button>
+</form>
+
+{% if chiffr %}
+  <br>
+  <div class="form-group">
+    <label for="motClair" class="form-label">Texte déchiffré (Atbash)</label>
+    <textarea class="form-control" rows="3" readonly>{{ chiffr }}</textarea>
+  </div>
+{% endif %}
+
+{% if conversion %}
+  <br>
+  <div class="form-group">
+    <label for="motClair" class="form-label">Conversion par Atbash</label>
+    <ul class="list-group">
+      {% for original, converted in conversion %}
+        <li class="list-group-item">{{ original }} → {{ converted }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+
+<br>
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Python / C</em>
+</div>
+<br>
+<div class="input-group mb-3">
+  <select class="custom-select" id="languageSelect">
+    <option selected disabled>Choose...</option>
+    <option value="python">Python</option>
+    <option value="cpp">C</option>
+  </select>
+  <div class="input-group-append">
+    <button type="button" class="btn btn-primary" onclick="showCode()">Afficher</button>
+  </div>
+</div>
+
+<div class="form-group">
+  <label for="code">Code</label>
+  <textarea class="form-control" id="code" rows="10" readonly></textarea>
+</div>
+
+<script>
+  function showCode() {
+    const language = document.getElementById("languageSelect").value;
+    const textarea = document.getElementById("code");
+
+    if (!language || language === "Choose...") {
+      textarea.value = "Veuillez choisir un langage pour afficher le code.";
+      return;
+    }
+
+    if (language === "python") {
+      textarea.value = `
+def atbush_encrypt(text):
+    result = ""
+    print("\\n--- Détail du chiffrement ---")
+    for char in text:
+        if char.isalpha():
+            if char.isupper():
+                converted = chr(65 + (25 - (ord(char) - 65)))
+            else:
+                converted = chr(97 + (25 - (ord(char) - 97)))
+            print(f"{char} → {converted}")
+            result += converted
+        else:
+            print(f"{char} (non alphabétique) → inchangé")
+            result += char
+    return result
+
+message = input("Entrez le message à chiffrer avec Atbush : ")
+chiffre = atbush_encrypt(message)
+print("\\nMessage chiffré :", chiffre)
+
+def atbash_transform(text, mode="encrypt"):
+    result = ""
+    action = "Chiffrement" if mode == "encrypt" else "Déchiffrement"
+    print(f"\\n--- Détail du {action.lower()} ---")
+    for char in text:
+        if char.isalpha():
+            if char.isupper():
+                converted = chr(65 + (25 - (ord(char) - 65)))
+            else:
+                converted = chr(97 + (25 - (ord(char) - 97)))
+            print(f"{char} → {converted}")
+            result += converted
+        else:
+            print(f"{char} (non alphabétique) → inchangé")
+            result += char
+    return result
+
+print("=== Chiffrement / Déchiffrement Atbush ===")
+choix = input("Tapez '1' pour chiffrer ou '2' pour déchiffrer : ")
+
+if choix == "1":
+    message = input("Entrez le message à chiffrer : ")
+    resultat = atbush_transform(message, mode="encrypt")
+    print("\\nMessage chiffré :", resultat)
+
+elif choix == "2":
+    message = input("Entrez le message à déchiffrer : ")
+    resultat = atbush_transform(message, mode="decrypt")
+    print("\\nMessage déchiffré :", resultat)
+
+else:
+    print("Choix invalide. Veuillez taper '1' ou '2'.")
+      `;
+    } else if (language === "cpp") {
+      textarea.value = `
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+
+void atbush_transform(char text[], int mode) {
+    char converted;
+    int i;
+    char action[20];
+    strcpy(action, mode == 1 ? "Chiffrement" : "Déchiffrement");
+
+    printf("\\n--- Détail du %s ---\\n", action);
+
+    for (i = 0; text[i] != '\\0'; i++) {
+        char c = text[i];
+
+        if (isalpha(c)) {
+            if (isupper(c)) {
+                converted = 'Z' - (c - 'A');
+            } else {
+                converted = 'z' - (c - 'a');
+            }
+            printf("%c → %c\\n", c, converted);
+            text[i] = converted;
+        } else {
+            printf("%c (non alphabétique) → inchangé\\n", c);
+        }
+    }
+
+    printf("\\nMessage %s : %s\\n", mode == 1 ? "chiffré" : "déchiffré", text);
+}
+
+int main() {
+    char message[1000];
+    int choix;
+
+    printf("=== Chiffrement / Déchiffrement Atbush ===\\n");
+    printf("Tapez '1' pour chiffrer ou '2' pour déchiffrer : ");
+    scanf("%d", &choix);
+    getchar(); // pour absorber le retour à la ligne
+
+    printf("Entrez le message : ");
+    fgets(message, sizeof(message), stdin);
+
+    // Supprimer le retour à la ligne final si présent
+    size_t len = strlen(message);
+    if (len > 0 && message[len - 1] == '\\n') {
+        message[len - 1] = '\\0';
+    }
+
+    if (choix == 1 || choix == 2) {
+        atbush_transform(message, choix);
+    } else {
+        printf("Choix invalide. Veuillez taper '1' ou '2'.\\n");
+    }
+
+    return 0;
+}
+      `;
+    }
+  }
+</script>
+
+{% endblock content %}

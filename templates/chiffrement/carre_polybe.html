@@ -1,0 +1,290 @@
+{% extends 'parte/navbar.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.css' %}">
+<br>
+
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Chiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'Carré_Polybe' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="motClair">Entrez un mot ou une phrase</label>
+    <input type="text" class="form-control" name="motClair" id="motClair" value="{{ motClair }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary">chiffrer</button>
+</form>
+
+{% if motChiffre %}
+  <br>
+  <div class="form-group">
+    <label>Clé de chiffrement :</label>
+    <input type="text" class="form-control" value="{{ cle }}" readonly>
+  </div>
+
+  <div class="form-group">
+    <label>Texte Chiffré :</label>
+    <textarea class="form-control" rows="3" readonly>{{ motChiffre }}</textarea>
+  </div>
+
+
+  <!-- Optionnel : matrice réelle avec les lettres -->
+  <div class="form-group">
+    <label>Matrice (lettres réelles) :</label>
+    <table class="table table-bordered text-center w-50 mx-auto">
+      {% for row in matriceC %}
+        <tr>
+          {% for cel in row %}
+            <td>{{ cel }}</td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <!-- Matrice Polybe avec les numéros -->
+  <div class="form-group">
+    <label>Matrice de Polybe (coordonnées de chiffrement) :</label>
+    <table class="table table-bordered text-center w-auto mx-auto">
+      <thead>
+        <tr>
+          <th></th>
+          {% for j in "12345" %}
+            <th>{{ j }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for i in "12345" %}
+          <tr>
+            <th>{{ i }}</th>
+            {% for j in "12345" %}
+              <td>{{ i }}{{ j }}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+{% endif %}
+
+
+
+
+
+
+<!-- Déchiffrement (Decryption) Section -->
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Déchiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'dech_Carré_Polybe' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="texteChiffre">Mot chiffré</label>
+    <input type="text" class="form-control" name="texteChiffre" id="texteChiffre" value="{{ texteChiffre }}" required>
+    <label for="key">Clé</label>
+    <input type="text" class="form-control" name="key" id="key" value="{{ key }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary">Déchiffrement</button>
+</form>
+
+{% if texteDechiffre %}
+  <br>
+  <div class="form-group">
+    <label>Texte déchiffré :</label>
+    <textarea class="form-control" rows="3" readonly>{{ texteDechiffre }}</textarea>
+  </div>
+
+  <div class="form-group">
+    <label>Matrice de Polybe :</label>
+    <table class="table table-bordered text-center w-50 mx-auto">
+      {% for row in matrice %}
+        <tr>
+          {% for cell in row %}
+            <td>{{ cell }}</td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+{% endif %}
+
+
+
+
+
+
+
+
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Python / C</em>
+</div>
+<br>
+
+<div class="input-group mb-3">
+  <select class="custom-select" id="languageSelect">
+    <option selected disabled>Choose...</option>
+    <option value="python">Python</option>
+    <option value="cpp">C</option>
+  </select>
+  <div class="input-group-append">
+    <button type="button" class="btn btn-primary" onclick="showCode()">Afficher</button>
+  </div>
+</div>
+
+
+
+<div class="form-group">
+  <label for="codeDisplay">Code</label>
+  <textarea class="form-control" id="codeDisplay" rows="10" readonly></textarea>
+</div>
+
+<script>
+  function showCode() {
+    const language = document.getElementById("languageSelect").value;
+    const textarea = document.getElementById("codeDisplay");
+
+    if (language === "python") {
+      textarea.value = `import random
+
+def crypter():
+    # Initial setup
+    key = []
+    matrice = [['' for _ in range(5)] for _ in range(5)]
+    encrypted_matrix = [['' for _ in range(5)] for _ in range(5)]
+    used_letters = set()
+
+    # Generate random key
+    key_length = random.randint(2, 10)
+    while len(key) < key_length:
+        random_char = chr(random.randint(65, 90))  # A-Z
+        if random_char != 'J' and random_char not in used_letters:
+            key.append(random_char)
+            used_letters.add(random_char)
+
+    # Fill the matrix with the key and the remaining alphabet
+    index = 0
+    letter = 'A'
+    for i in range(5):
+        for j in range(5):
+            if index < len(key):
+                matrice[i][j] = key[index]
+                index += 1
+            else:
+                while letter == 'J' or letter in used_letters:
+                    letter = chr(ord(letter) + 1)
+                matrice[i][j] = letter
+                used_letters.add(letter)
+                letter = chr(ord(letter) + 1)
+
+    # Print the generated key and matrix
+    print(f"Clé générée : {''.join(key)}")
+    print("\nCarré de Polybe :")
+    for row in matrice:
+        print(' '.join(row))
+
+    # Generate the encrypted matrix
+    for i in range(5):
+        for j in range(5):
+            encrypted_matrix[i][j] = str(i + 1) + str(j + 1)
+
+    # Print the encrypted matrix
+    print("\nMatrice chiffrée :")
+    for row in encrypted_matrix:
+        print(' '.join(row))
+
+
+if __name__ == "__main__":
+    crypter()
+`;
+
+    } else if (language === "cpp") {
+      textarea.value = `#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MATRIX_SIZE 5
+
+void crypter() {
+    // Initial setup
+    char key[10];  // Maximum key length of 10
+    int key_length;
+    char matrice[MATRIX_SIZE][MATRIX_SIZE];
+    char encrypted_matrix[MATRIX_SIZE][MATRIX_SIZE];
+    char used_letters[26] = {0};  // For tracking used letters
+    int index = 0;
+
+    // Generate random key
+    key_length = rand() % 9 + 2;  // Key length between 2 and 10
+    while (index < key_length) {
+        char random_char = 'A' + rand() % 26;  // A-Z
+        if (random_char != 'J' && !used_letters[random_char - 'A']) {
+            key[index++] = random_char;
+            used_letters[random_char - 'A'] = 1;
+        }
+    }
+
+    // Fill the matrix with the key and the remaining alphabet
+    char letter = 'A';
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            if (index < key_length) {
+                matrice[i][j] = key[index++];
+            } else {
+                while (letter == 'J' || used_letters[letter - 'A']) {
+                    letter++;
+                }
+                matrice[i][j] = letter;
+                used_letters[letter - 'A'] = 1;
+                letter++;
+            }
+        }
+    }
+
+    // Print the generated key and matrix
+    printf("\nClé générée : %.*s\n", key_length, key);
+    printf("\nCarré de Polybe :\n");
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            printf("%c ", matrice[i][j]);
+        }
+        printf("\n");
+    }
+
+    // Generate the encrypted matrix
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            encrypted_matrix[i][j] = '0' + (i + 1);
+            encrypted_matrix[i][j + 1] = '0' + (j + 1);
+        }
+    }
+
+    // Print the encrypted matrix
+    printf("\nMatrice chiffrée :\n");
+    for (int i = 0; i < MATRIX_SIZE; i++) {
+        for (int j = 0; j < MATRIX_SIZE; j++) {
+            printf("%c%c ", encrypted_matrix[i][j], encrypted_matrix[i][j + 1]);
+        }
+        printf("\n");
+    }
+}
+
+int main() {
+    srand(time(NULL));
+    crypter();
+    return 0;
+}
+`;
+    } else {
+      textarea.value = "";
+    }
+  }
+</script>
+
+
+{% endblock content %}

@@ -1,0 +1,240 @@
+{% extends 'parte/navbar.html' %}
+{% load static %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'bootstrap/css/bootstrap.css' %}">
+<br>
+<div class="mx-auto text-primary h3 " style="width: 200px;">
+  <em>
+    Chiffrement
+  </em>
+</div>
+<form method="POST" action="{% url 'chiffCesar' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="motClair">Enterz un mot ou phrase </label>
+    <input type="text" class="form-control" name="motClair" id="motClair" value="{{motClair}}" required>
+  </div>
+  <button type="submit" class="btn btn-primary">Chiffrement</button>
+</form>
+{% if motChiffre %}
+<br>
+  <div class="form-group">
+    <label>Clé de chiffrement :</label>
+    <input type="text" class="form-control" value="{{Key}}" required>
+  </div>
+
+<div class="input-group">
+  <div class="input-group-prepend">
+    <span class="input-group-text">Texte Chiffré</span>
+  </div>
+  <textarea class="form-control" aria-label="With textarea">{{motChiffre}}</textarea>
+</div>
+<br>
+{% endif %}
+<!-- Déchiffrement (Decryption) Section -->
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Déchiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'dechiffCeser' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="mot_Chiffre">Mot chiffré</label>
+    <input type="text" class="form-control" name="mot_Chiffre" id="mot_Chiffre" value="{{ mot_Chiffre }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary">Déchiffrement</button>
+</form>
+
+{% if texteClair %}
+  <br>
+    <div class="form-group">
+      <label for="motClair" class="form-label">Résultats possibles (Brute Force)</label>
+      <ul class="list-group">
+        {% for key, result in texteClair %}
+          <li class="list-group-item">
+            <p>Clé -{{ key }} :</p> {{ result }}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+{% endif %}
+
+<br>
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Python / C</em>
+</div>
+<br>
+
+<div class="input-group mb-3">
+  <select class="custom-select" id="languageSelect">
+    <option selected disabled>Choose...</option>
+    <option value="python">Python</option>
+    <option value="cpp">C</option>
+  </select>
+  <div class="input-group-append">
+    <button type="button" class="btn btn-primary" onclick="showCode()">Afficher</button>
+  </div>
+</div>
+
+<div class="form-group">
+  <label for="codeDisplay">Code</label>
+  <textarea class="form-control" id="codeDisplay" rows="10" readonly></textarea>
+</div>
+
+<script>
+  function showCode() {
+    const language = document.getElementById("languageSelect").value;
+    const textarea = document.getElementById("codeDisplay");
+
+    if (language === "python") {
+      textarea.value = `import random
+# Fonction de chiffrement César
+def chiffrement_cesar(texte, cle):
+    resultat = ""
+    for char in texte:
+        if char.isalpha():  # Vérifier si c'est une lettre
+            decalage = cle % 26
+            if char.islower():
+                resultat += chr((ord(char) - ord('a') + decalage) % 26 + ord('a'))
+            elif char.isupper():
+                resultat += chr((ord(char) - ord('A') + decalage) % 26 + ord('A'))
+        else:
+            resultat += char  # Si ce n'est pas une lettre, on laisse tel quel
+    return resultat
+
+
+# Fonction de déchiffrement César
+def dechiffrement_cesar(texte, cle):
+    return chiffrement_cesar(texte, -cle)  # Inverser le décalage
+
+
+# Fonction de déchiffrement par force brute (toutes les clés possibles)
+def force_brute_dechiffrement(texte):
+    for cle in range(1, 26):
+        print(f"Essai avec clé {cle}: {dechiffrement_cesar(texte, cle)}")
+
+
+# Fonction principale avec choix utilisateur
+def main():
+    while True:
+        print("\\nMenu:")
+        print("1: Chiffrement")
+        print("2: Déchiffrement")
+        print("3: Quitter")
+
+        choix = int(input("Choisissez une option (1/2/3): "))
+
+        if choix == 1:
+            texte = input("Entrez le texte à chiffrer: ")
+            cle = random.randint(1, 25)  # Clé aléatoire
+            print(f"Clé de chiffrement (aléatoire): {cle}")
+            texte_chiffre = chiffrement_cesar(texte, cle)
+            print(f"Texte chiffré: {texte_chiffre}")
+
+        elif choix == 2:
+            texte = input("Entrez le texte à déchiffrer: ")
+            cle = random.randint(1, 25)  # Clé aléatoire
+            print(f"Clé de déchiffrement (aléatoire): {cle}")
+            texte_dechiffre = dechiffrement_cesar(texte, cle)
+            print(f"Texte déchiffré avec clé {cle}: {texte_dechiffre}")
+
+            # Force brute
+            print("Essai de déchiffrement par force brute:")
+            force_brute_dechiffrement(texte)
+
+        elif choix == 3:
+            print("Au revoir!")
+            break  # Sortir de la boucle et arrêter le programme
+
+        else:
+            print("Choix invalide, veuillez entrer 1, 2 ou 3.")
+
+# Appel à la fonction principale
+if __name__ == "__main__":
+    main()`;
+
+    } else if (language === "cpp") {
+      textarea.value = `#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+void chiffrement_cesar(char* texte, int cle) {
+    for (int i = 0; texte[i] != '\\0'; i++) {
+        if (isalpha(texte[i])) {
+            char base = (islower(texte[i])) ? 'a' : 'A';
+            texte[i] = (texte[i] - base + cle) % 26 + base;
+        }
+    }
+}
+
+void dechiffrement_cesar(char* texte, int cle) {
+    chiffrement_cesar(texte, 26 - cle);  // Déchiffrement est simplement un chiffrement inverse
+}
+
+void force_brute_dechiffrement(char* texte) {
+    for (int cle = 1; cle < 26; cle++) {
+        char texte_copie[strlen(texte) + 1];
+        strcpy(texte_copie, texte);
+        dechiffrement_cesar(texte_copie, cle);
+        printf("Essai avec clé %d: %s\\n", cle, texte_copie);
+    }
+}
+
+int main() {
+    int choix;
+    char texte[100];
+
+    while (1) {
+        printf("\\nMenu:\\n");
+        printf("1: Chiffrement\\n");
+        printf("2: Déchiffrement\\n");
+        printf("3: Quitter\\n");
+
+        printf("Choisissez une option (1/2/3): ");
+        scanf("%d", &choix);
+        getchar();  // Pour consommer le caractère '\\n' laissé par scanf
+
+        if (choix == 1) {
+            printf("Entrez le texte à chiffrer: ");
+            fgets(texte, sizeof(texte), stdin);
+            texte[strcspn(texte, "\\n")] = '\\0';  // Enlever le caractère de nouvelle ligne
+
+            int cle = rand() % 25 + 1;  // Clé aléatoire entre 1 et 25
+            printf("Clé de chiffrement (aléatoire): %d\\n", cle);
+            chiffrement_cesar(texte, cle);
+            printf("Texte chiffré: %s\\n", texte);
+
+        } else if (choix == 2) {
+            printf("Entrez le texte à déchiffrer: ");
+            fgets(texte, sizeof(texte), stdin);
+            texte[strcspn(texte, "\\n")] = '\\0';  // Enlever le caractère de nouvelle ligne
+
+            int cle = rand() % 25 + 1;  // Clé aléatoire entre 1 et 25
+            printf("Clé de déchiffrement (aléatoire): %d\\n", cle);
+            dechiffrement_cesar(texte, cle);
+            printf("Texte déchiffré avec clé %d: %s\\n", cle, texte);
+
+            // Force brute
+            printf("Essai de déchiffrement par force brute:\\n");
+            force_brute_dechiffrement(texte);
+
+        } else if (choix == 3) {
+            printf("Au revoir!\\n");
+            break;  // Sortir de la boucle et arrêter le programme
+
+        } else {
+            printf("Choix invalide, veuillez entrer 1, 2 ou 3.\\n");
+        }
+    }
+
+    return 0;
+}`;
+    } else {
+      textarea.value = "";
+    }
+  }
+</script>
+
+
+{% endblock content %}

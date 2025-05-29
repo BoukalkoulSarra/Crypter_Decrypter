@@ -1,0 +1,310 @@
+{% extends 'parte/navbar.html' %}
+{% load static %}
+{% block content %}
+
+<!-- chiffrement Section -->
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Chiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'encryptAlberti' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="motClair">Entrez un mot ou une phrase</label>
+    <input type="text" class="form-control" name="motClair" id="motClair" value="{{ motClair }}" required>
+
+    <label for="key">Décalage (0 à 25) :</label>
+    <input type="text" class="form-control" name="shift" id="shift" value="{{ shift }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary">chiffrer</button>
+</form>
+
+{% if motChiffre %}
+  <br>
+  <div class="form-group">
+    <label>Texte Chiffré :</label>
+    <textarea class="form-control" rows="3" readonly>{{ motChiffre }}</textarea>
+  </div>
+{% endif %}
+
+<hr>
+
+<!-- decrypter Section -->
+<div class="mx-auto text-primary h3" style="width: 300px;">
+  <em>Déchiffrement</em>
+</div>
+
+<form method="POST" action="{% url 'dencryptAlberti' %}">
+  {% csrf_token %}
+  <div class="form-group">
+    <label for="textDecrypter">Message chiffré</label>
+    <input type="text" class="form-control" name="textDecrypter" id="textDecrypter" value="{{ textDecrypter }}" required>
+
+    <label for="shifte">Décalage (0 à 25) :</label>
+    <input type="text" class="form-control" name="shifte" id="shifte" value="{{ shifte }}" required>
+  </div>
+  <button type="submit" class="btn btn-primary mt-2">Déchiffrer</button>
+</form>
+
+{% if textClair %}
+  <div class="alert alert-success mt-3">Message Déchiffré : {{ textClair }}</div>
+{% endif %}
+
+
+
+
+
+
+<div class="mx-auto text-primary h3" style="width: 200px;">
+  <em>Python / C</em>
+</div>
+<br>
+
+<div class="input-group mb-3">
+  <select class="custom-select" id="languageSelect">
+    <option selected disabled>Choose...</option>
+    <option value="python">Python</option>
+    <option value="cpp">C</option>
+  </select>
+  <div class="input-group-append">
+    <button type="button" class="btn btn-primary" onclick="showCode()">Afficher</button>
+  </div>
+</div>
+<div class="form-group">
+  <label for="codeDisplay">Code</label>
+  <textarea class="form-control" id="codeDisplay" rows="10" readonly></textarea>
+</div>
+
+<script>
+  function showCode() {
+    const language = document.getElementById("languageSelect").value;
+    const textarea = document.getElementById("codeDisplay");
+
+    if (language === "python") {
+      textarea.value = `class AlbertiCipher:
+    def __init__(self, shift=0):
+        self.outer_ring = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        self.inner_ring = list("abcdefghijklmnopqrstuvwxyz")
+        self.set_shift(shift)
+
+    def set_shift(self, shift):
+        self.shift = shift % 26
+        self.current_inner = self.inner_ring[self.shift:] + self.inner_ring[:self.shift]
+
+    def encrypt(self, plaintext, shift_changes=None):
+        ciphertext = ""
+        shift_index = 0
+
+        for i, char in enumerate(plaintext.upper()):
+            if not char.isalpha():
+                ciphertext += char
+                continue
+
+            if shift_changes and shift_index < len(shift_changes) and i == shift_changes[shift_index][0]:
+                new_shift = shift_changes[shift_index][1]
+                self.set_shift(new_shift)
+                shift_index += 1
+
+            index = self.outer_ring.index(char)
+            ciphertext += self.current_inner[index]
+
+        return ciphertext
+
+    def decrypt(self, ciphertext, shift_changes=None):
+        plaintext = ""
+        shift_index = 0
+
+        for i, char in enumerate(ciphertext):
+            if not char.isalpha() or char.isupper():
+                plaintext += char
+                continue
+
+            if shift_changes and shift_index < len(shift_changes) and i == shift_changes[shift_index][0]:
+                new_shift = shift_changes[shift_index][1]
+                self.set_shift(new_shift)
+                shift_index += 1
+
+            index = self.current_inner.index(char)
+            plaintext += self.outer_ring[index]
+
+        return plaintext
+
+
+# 💬 Partie interactive
+if __name__ == "__main__":
+    print("=== Chiffrement / Déchiffrement Alberti ===")
+    mode = input("Mode (c pour chiffrer, d pour déchiffrer) : ").lower()
+
+    message = input("Entrez le message : ")
+
+    try:
+        shift = int(input("Entrez le décalage initial (entre 0 et 25) : "))
+    except ValueError:
+        print("Décalage invalide. Utilisation de la valeur par défaut 0.")
+        shift = 0
+
+    shift_changes = []
+    while True:
+        add_change = input("Souhaitez-vous ajouter un changement de décalage ? (o/n) : ").lower()
+        if add_change != 'o':
+            break
+        try:
+            pos = int(input("  À quelle position changer le décalage ? (index du caractère) : "))
+            new_shift = int(input("  Nouveau décalage à cette position (0–25) : "))
+            shift_changes.append((pos, new_shift))
+        except ValueError:
+            print("  Entrée invalide, ignorée.")
+
+    cipher = AlbertiCipher(shift)
+
+    if mode == 'c':
+        result = cipher.encrypt(message, shift_changes)
+        print("\n🔐 Message chiffré :", result)
+    elif mode == 'd':
+        result = cipher.decrypt(message, shift_changes)
+        print("\n🔓 Message déchiffré :", result)
+    else:
+        print("Mode non reconnu.")
+
+`;
+
+    } else if (language === "cpp") {
+      textarea.value = `#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+
+#define MAX_LEN 1000
+#define MAX_CHANGES 100
+
+// Structure pour représenter un changement de décalage
+typedef struct {
+    int pos;
+    int shift;
+} ShiftChange;
+
+char outer_ring[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+char inner_ring[] = "abcdefghijklmnopqrstuvwxyz";
+char current_inner[27];  // +1 pour le caractère nul '\0'
+
+void set_shift(int shift) {
+    shift = shift % 26;
+    for (int i = 0; i < 26; i++) {
+        current_inner[i] = inner_ring[(i + shift) % 26];
+    }
+    current_inner[26] = '\0';
+}
+
+void encrypt(const char* plaintext, char* ciphertext, ShiftChange* changes, int num_changes, int init_shift) {
+    int shift_index = 0;
+    int len = strlen(plaintext);
+    set_shift(init_shift);
+
+    for (int i = 0; i < len; i++) {
+        // Appliquer un changement de décalage si nécessaire
+        if (shift_index < num_changes && i == changes[shift_index].pos) {
+            set_shift(changes[shift_index].shift);
+            shift_index++;
+        }
+
+        char c = toupper(plaintext[i]);
+
+        if (!isalpha(c)) {
+            ciphertext[i] = plaintext[i];
+        } else {
+            int index = c - 'A';
+            ciphertext[i] = current_inner[index];
+        }
+    }
+
+    ciphertext[len] = '\0';
+}
+
+void decrypt(const char* ciphertext, char* plaintext, ShiftChange* changes, int num_changes, int init_shift) {
+    int shift_index = 0;
+    int len = strlen(ciphertext);
+    set_shift(init_shift);
+
+    for (int i = 0; i < len; i++) {
+        // Appliquer un changement de décalage si nécessaire
+        if (shift_index < num_changes && i == changes[shift_index].pos) {
+            set_shift(changes[shift_index].shift);
+            shift_index++;
+        }
+
+        char c = ciphertext[i];
+
+        if (!isalpha(c) || isupper(c)) {
+            plaintext[i] = c;
+        } else {
+            // Trouver la position dans l’anneau interne
+            for (int j = 0; j < 26; j++) {
+                if (current_inner[j] == c) {
+                    plaintext[i] = outer_ring[j];
+                    break;
+                }
+            }
+        }
+    }
+
+    plaintext[len] = '\0';
+}
+
+// === Programme principal ===
+int main() {
+    char message[MAX_LEN];
+    char result[MAX_LEN];
+    ShiftChange changes[MAX_CHANGES];
+    int shift, nb_changes = 0;
+    char mode;
+
+    printf("=== Chiffrement/Déchiffrement Alberti (C) ===\n");
+    printf("Mode (c = chiffrer, d = déchiffrer) : ");
+    scanf(" %c", &mode);
+    getchar();  // consommer le saut de ligne
+
+    printf("Entrez le message : ");
+    fgets(message, MAX_LEN, stdin);
+    message[strcspn(message, "\n")] = '\0';  // retirer '\n'
+
+    printf("Entrez le décalage initial (0–25) : ");
+    scanf("%d", &shift);
+
+    while (1) {
+        char answer;
+        printf("Ajouter un changement de décalage ? (o/n) : ");
+        scanf(" %c", &answer);
+        if (answer != 'o') break;
+
+        if (nb_changes < MAX_CHANGES) {
+            printf("  Position du changement : ");
+            scanf("%d", &changes[nb_changes].pos);
+            printf("  Nouveau décalage (0–25) : ");
+            scanf("%d", &changes[nb_changes].shift);
+            nb_changes++;
+        } else {
+            printf("  Trop de changements.\n");
+            break;
+        }
+    }
+
+    if (mode == 'c') {
+        encrypt(message, result, changes, nb_changes, shift);
+        printf("\n🔐 Message chiffré : %s\n", result);
+    } else if (mode == 'd') {
+        decrypt(message, result, changes, nb_changes, shift);
+        printf("\n🔓 Message déchiffré : %s\n", result);
+    } else {
+        printf("Mode invalide.\n");
+    }
+
+    return 0;
+}
+
+`;
+    } else {
+      textarea.value = "";
+    }
+  }
+</script>
+{% endblock content %}
+
